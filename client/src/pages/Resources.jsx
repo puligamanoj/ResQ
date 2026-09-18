@@ -1,89 +1,77 @@
-import { Link } from "react-router-dom";
-import "../index.css";
+import React, { useState, useEffect } from "react";
+import Navbar from "../components/Navbar";
+import ResourceCard from "../components/ResourceCard";
+import resourceService from "../services/resourceService";
+import { Truck, Search, Filter } from "lucide-react";
 
-function Resources() {
+export function Resources() {
+  const [resources, setResources] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState("ALL");
 
-  const resources = [
-    {
-      name: "Rescue Team Alpha",
-      type: "Rescue Team",
-      location: "Area A",
-      status: "Available"
-    },
-    {
-      name: "Ambulance #03",
-      type: "Medical",
-      location: "Area C",
-      status: "Available"
-    },
-    {
-      name: "Food Vehicle #07",
-      type: "Food Supply",
-      location: "Area B",
-      status: "Deployed"
-    },
-    {
-      name: "Rescue Team Beta",
-      type: "Rescue Team",
-      location: "Area D",
-      status: "Available"
-    }
-  ];
+  useEffect(() => {
+    const fetchResources = async () => {
+      const data = await resourceService.getResources();
+      setResources(data);
+    };
+    fetchResources();
+  }, []);
+
+  const handleDeploy = async (resource) => {
+    await resourceService.updateResourceStatus(resource.id, "Deployed");
+    const updated = await resourceService.getResources();
+    setResources(updated);
+  };
+
+  const filteredResources = resources.filter((r) => {
+    const matchesSearch = r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          r.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = selectedType === "ALL" || r.type === selectedType;
+    return matchesSearch && matchesType;
+  });
 
   return (
-    <div className="app">
+    <div className="app-layout">
+      <Navbar />
 
-      <nav className="navbar">
-        <h2>🚨 ResQ</h2>
-
-        <div className="nav-links">
-          <Link to="/">Dashboard</Link>
-          <Link to="/emergency">Emergency</Link>
-          <Link to="/resources">Resources</Link>
-          <Link to="/map">Live Map</Link>
+      <main className="main-content">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Relief & Rescue Resources</h1>
+            <p className="page-subtitle">Track, filter, and dispatch available emergency response assets</p>
+          </div>
         </div>
-      </nav>
 
-      <main className="dashboard">
+        <div className="filter-bar">
+          <div className="search-input-wrapper">
+            <Search size={18} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search resource name or location..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
-        <h1>Resources</h1>
-        <p>Monitor rescue and relief resources.</p>
+          <div className="filter-group">
+            <Filter size={16} />
+            <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
+              <option value="ALL">All Categories</option>
+              <option value="Rescue Team">Rescue Teams</option>
+              <option value="Medical">Medical Units</option>
+              <option value="Food Supply">Food Supplies</option>
+              <option value="Water Supply">Water Tankers</option>
+              <option value="Engineering">Engineering / Machinery</option>
+            </select>
+          </div>
+        </div>
 
-        <div className="resource-grid">
-
-          {resources.map((resource, index) => (
-
-            <div className="resource-card" key={index}>
-
-              <h2>{resource.name}</h2>
-
-              <p>
-                <b>Type:</b> {resource.type}
-              </p>
-
-              <p>
-                <b>Location:</b> {resource.location}
-              </p>
-
-              <p>
-                <b>Status:</b>{" "}
-                <span className={
-                  resource.status === "Available"
-                    ? "available"
-                    : "deployed"
-                }>
-                  {resource.status}
-                </span>
-              </p>
-
-            </div>
-
+        <div className="resources-grid">
+          {filteredResources.map((resource) => (
+            <ResourceCard key={resource.id} resource={resource} onDeploy={handleDeploy} />
           ))}
-
         </div>
-
       </main>
-
     </div>
   );
 }

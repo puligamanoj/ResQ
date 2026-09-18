@@ -1,123 +1,121 @@
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import "../index.css";
+import Navbar from "../components/Navbar";
+import StatCard from "../components/StatCard";
+import DisasterStatus from "../components/DisasterStatus";
+import EmergencyCard from "../components/EmergencyCard";
+import AlertCard from "../components/AlertCard";
+import emergencyService from "../services/emergencyService";
+import disasterService from "../services/disasterService";
+import resourceService from "../services/resourceService";
+import { AlertCircle, AlertTriangle, Truck, Users, Plus, Activity } from "lucide-react";
 
-function Dashboard() {
+export function Dashboard() {
+  const [emergencies, setEmergencies] = useState([]);
+  const [disasterInfo, setDisasterInfo] = useState(null);
+  const [resources, setResources] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const emgData = await emergencyService.getEmergencies();
+      const disData = await disasterService.getDisasterInfo();
+      const resData = await resourceService.getResources();
+      const altData = await disasterService.getAlerts();
+
+      setEmergencies(emgData);
+      setDisasterInfo(disData.disaster);
+      setResources(resData);
+      setAlerts(altData);
+    };
+
+    fetchData();
+  }, []);
+
+  const criticalCases = emergencies.filter((e) => e.urgency === "CRITICAL").length;
+  const availableResources = resources.filter((r) => r.status === "Available").length;
+  const activeTeams = resources.filter((r) => r.status === "Deployed").length;
+
   return (
-    <div className="app">
+    <div className="app-layout">
+      <Navbar />
 
-      <nav className="navbar">
-        <h2>🚨 ResQ</h2>
-
-        <div className="nav-links">
-          <Link to="/">Dashboard</Link>
-          <Link to="/emergency">Emergency</Link>
-          <Link to="/resources">Resources</Link>
-          <Link to="/map">Live Map</Link>
-        </div>
-      </nav>
-
-      <main className="dashboard">
-
-        <div className="header">
+      <main className="main-content">
+        <div className="page-header">
           <div>
-            <h1>Disaster Command Center</h1>
-            <p>Real-time emergency response coordination</p>
+            <h1 className="page-title">Disaster Command Center</h1>
+            <p className="page-subtitle">Real-time emergency response coordination & operational overview</p>
           </div>
 
-          <Link to="/emergency" className="primary-btn">
-            + Report Emergency
+          <Link to="/emergency" className="btn-primary">
+            <Plus size={18} /> Report Emergency
           </Link>
         </div>
 
-        <div className="stats">
+        {disasterInfo && <DisasterStatus disaster={disasterInfo} />}
 
-          <div className="stat-card">
-            <h3>Active Emergencies</h3>
-            <h1>12</h1>
-            <p>Currently active</p>
-          </div>
+        <div className="stats-grid">
+          <StatCard
+            title="Active Emergencies"
+            value={emergencies.length}
+            subtitle="Currently tracked"
+            icon={AlertCircle}
+            colorClass="stat-danger"
+          />
 
-          <div className="stat-card">
-            <h3>Critical Cases</h3>
-            <h1>4</h1>
-            <p>Immediate response</p>
-          </div>
+          <StatCard
+            title="Critical Cases"
+            value={criticalCases}
+            subtitle="Immediate dispatch required"
+            icon={AlertTriangle}
+            colorClass="stat-critical"
+          />
 
-          <div className="stat-card">
-            <h3>Available Resources</h3>
-            <h1>18</h1>
-            <p>Ready for deployment</p>
-          </div>
+          <StatCard
+            title="Available Resources"
+            value={availableResources}
+            subtitle="Ready for deployment"
+            icon={Truck}
+            colorClass="stat-success"
+          />
 
-          <div className="stat-card">
-            <h3>Active Teams</h3>
-            <h1>7</h1>
-            <p>Currently deployed</p>
-          </div>
-
+          <StatCard
+            title="Active Deployed Teams"
+            value={activeTeams}
+            subtitle="Operations ongoing"
+            icon={Users}
+            colorClass="stat-warning"
+          />
         </div>
 
-        <div className="content-grid">
-
-          <section className="panel">
-            <div className="panel-header">
+        <div className="dashboard-grid">
+          <section className="dashboard-section">
+            <div className="section-header">
               <h2>Active Emergencies</h2>
-              <span>Live</span>
+              <span className="badge-live">LIVE updates</span>
             </div>
 
-            <div className="emergency">
-              <div>
-                <h3>Flood — Area A</h3>
-                <p>32 people affected</p>
-              </div>
-              <strong className="critical">CRITICAL</strong>
+            <div className="emergency-cards-list">
+              {emergencies.slice(0, 4).map((emergency) => (
+                <EmergencyCard key={emergency.id} emergency={emergency} />
+              ))}
             </div>
-
-            <div className="emergency">
-              <div>
-                <h3>Building Collapse — Area C</h3>
-                <p>12 people affected</p>
-              </div>
-              <strong className="high">HIGH</strong>
-            </div>
-
-            <div className="emergency">
-              <div>
-                <h3>Food Shortage — Area B</h3>
-                <p>80 people affected</p>
-              </div>
-              <strong className="medium">MEDIUM</strong>
-            </div>
-
           </section>
 
-          <section className="panel">
-
-            <div className="panel-header">
-              <h2>System Alerts</h2>
+          <section className="dashboard-section">
+            <div className="section-header">
+              <h2>System Alerts & Feed</h2>
+              <Link to="/alerts" className="view-all-link">View All</Link>
             </div>
 
-            <div className="alert">
-              🚨 <b>Road R17 blocked</b>
-              <p>Emergency #104 requires replanning.</p>
+            <div className="alerts-list">
+              {alerts.map((alert) => (
+                <AlertCard key={alert.id} alert={alert} />
+              ))}
             </div>
-
-            <div className="alert">
-              🚑 <b>Ambulance #03 assigned</b>
-              <p>ETA: 8 minutes.</p>
-            </div>
-
-            <div className="alert">
-              🔄 <b>Resources reallocated</b>
-              <p>Alternative rescue team selected.</p>
-            </div>
-
           </section>
-
         </div>
-
       </main>
-
     </div>
   );
 }
