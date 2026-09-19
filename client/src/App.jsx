@@ -9,7 +9,7 @@ import GovernmentDashboard from "./pages/GovernmentDashboard";
 import Dashboard from "./pages/Dashboard";
 import Emergency from "./pages/Emergency";
 import Resources from "./pages/Resources";
-import Map from "./pages/Map";
+import Map from "./pages/Map.jsx";
 
 function App() {
   return (
