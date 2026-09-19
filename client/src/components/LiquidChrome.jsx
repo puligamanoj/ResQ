@@ -58,8 +58,12 @@ export const LiquidChrome = ({
           float ripple = sin(10.0 * dist - uTime * 2.0) * 0.03;
           uv += (diff / (dist + 0.0001)) * ripple * falloff;
 
-          vec3 color = uBaseColor / abs(sin(uTime - uv.y - uv.x));
-          return vec4(color, 1.0);
+        float wave = abs(sin(uTime - uv.y - uv.x));
+
+vec3 color = uBaseColor / (wave + 0.35);
+color *= 0.5;
+
+return vec4(color, 1.0);
       }
 
       void main() {
